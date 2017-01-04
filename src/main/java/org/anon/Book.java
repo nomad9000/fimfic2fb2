@@ -9,7 +9,7 @@ public class Book {
 
     //content of title-info tag
     private String genre;
-    private HashMap<String, String> author = new HashMap<>(); //TODO: make a class instead hashmap
+    private Author author;
     private String bookTitle;
     private ArrayList<String> annotation; //any real text blocks which is able to contain tags <p>, <title>, <image> and other should be collections with this lines already formatted in FB2
     private String keywords;
@@ -40,11 +40,11 @@ public class Book {
         this.genre = genre;
     }
 
-    public HashMap<String, String> getAuthor() {
+    public Author getAuthor() {
         return author;
     }
 
-    public void setAuthor(HashMap<String, String> author) {
+    public void setAuthor(Author author) {
         this.author = author;
     }
 

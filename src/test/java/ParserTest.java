@@ -51,4 +51,43 @@ public class ParserTest {
             e.printStackTrace();
         }
     }
+
+    @Test
+    public void testParseRating() {
+        try {
+            Document doc = Jsoup.connect("http://www.fimfiction.net/story/359300/lost-nights").get();
+            String rating;
+            rating = doc.select("html body .body_container .content .content_background .inner .user_blog_post  .left .story_container .story_content_box .no_padding .title [class^=content-rating]").first().attr("title");
+            System.out.println(rating);
+            assertEquals(rating, "Rated for everyone");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testParseStatus() {
+        try {
+            Document doc = Jsoup.connect("http://www.fimfiction.net/story/359300/lost-nights").get();
+            String rating;
+            rating = doc.select("html body .body_container .content .content_background .inner .user_blog_post .left .story_container .story_content_box .no_padding .story .story_data .right .padding [id^=form-chapter-list] .chapters .bottom [class^=completed-status]").first().attr("title");
+            System.out.println(rating);
+            assertEquals(rating, "Incomplete");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testParseWordcount() {
+        try {
+            Document doc = Jsoup.connect("http://www.fimfiction.net/story/359300/lost-nights").get();
+            String rating;
+            rating = doc.select("html body .body_container .content .content_background .inner .user_blog_post .left .story_container .story_content_box .no_padding .story .story_data .right .padding [id^=form-chapter-list] .chapters .bottom .word_count").first().text();
+            System.out.println(rating);
+            assertEquals(rating, "2,960 words total");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

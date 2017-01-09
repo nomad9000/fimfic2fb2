@@ -2,13 +2,13 @@ package org.anon;
 
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 public class Book {
 
     //content of title-info tag
-    private String genre;
+    private List<String> genres;
     private Author author;
     private String bookTitle;
     private ArrayList<String> annotation; //any real text blocks which is able to contain tags <p>, <title>, <image> and other should be collections with this lines already formatted in FB2
@@ -22,6 +22,11 @@ public class Book {
     private String rippedDate; //date when book was ripped. Taken from current date
     private URL srcURL;
 
+    //content of custom-info tag
+    private String rating;
+    private String wordcount;
+    private String status;
+
     //content of body tag (chapters)
     private ArrayList<Chapter> chapters = new ArrayList<>();
 
@@ -32,12 +37,12 @@ public class Book {
         programmUsed = Context.getInstance().getNameAndVersion();
     }
 
-    public String getGenre() {
-        return genre;
+    public List<String> getGenres() {
+        return genres;
     }
 
-    public void setGenre(String genre) {
-        this.genre = genre;
+    public void setGenres(List<String> genres) {
+        this.genres = genres;
     }
 
     public Author getAuthor() {
@@ -136,4 +141,27 @@ public class Book {
         this.binaries = binaries;
     }
 
+    public String getWordcount() {
+        return wordcount;
+    }
+
+    public void setWordcount(String wordcount) {
+        this.wordcount = wordcount;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getRating() {
+        return rating;
+    }
+
+    public void setRating(String rating) {
+        this.rating = rating;
+    }
 }

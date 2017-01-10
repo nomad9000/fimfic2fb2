@@ -20,7 +20,7 @@ public class Parser {
             Elements genres;
             Element bookTitle, author, keywords, lastUpdated, coverpage, rating, wordcount, status;
             List<String> ex = new ArrayList<>();
-
+            //TODO: check for validness with Cleaner
             if ((bookTitle = doc.select("html body .body_container .content .content_background " +
                     ".inner .user_blog_post .left .story_container .story_content_box .no_padding .title " +
                     ".resize_text .story_name").first()) != null) {
@@ -58,8 +58,9 @@ public class Parser {
                     }
                 }
                 e.append("). You have to submit main page of the story, where description, tags and chapter list is.");
-                throw new Exception(e.toString());
+                throw new Exception(e.toString()); //TODO: more specific Exception class
             }
+
             if ((genres = doc.select("html body .body_container .content .content_background .inner " +
                     ".user_blog_post .left .story_container .story_content_box .no_padding .story .story_data " +
                     ".right .padding .description .story_category")) != null) {
@@ -68,8 +69,6 @@ public class Parser {
                     genresParsed.add(e.childNode(0).toString());
                 }
                 book.setGenres(genresParsed);
-            } else {
-                ex.add(".story_category");
             }
             book.setBookTitle(doc.select("story_name").first().text());
 

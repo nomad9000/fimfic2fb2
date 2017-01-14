@@ -1,8 +1,10 @@
 package org.anon;
 
 import org.jsoup.Jsoup;
+import org.jsoup.helper.Validate;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
 import org.jsoup.parser.ParseError;
 import org.jsoup.select.Elements;
 
@@ -16,11 +18,12 @@ public class Parser {
     public static Book parseBook(URL url) throws Exception {
         Book book = new Book();
         try {
-            Document doc = Jsoup.connect(url.toString()).get();
+            Document doc = Jsoup.connect(url.toString()).cookie("view_mature", "true").get();
+            //TODO: fb2 required a closing pair for hr tag
+            //TODO: remove first hr tag from description
             Elements genres;
             Element bookTitle, author, keywords, lastUpdated, coverpage, rating, wordcount, status;
             List<String> ex = new ArrayList<>();
-            //TODO: check for validness with Cleaner
             if ((bookTitle = doc.select("html body .body_container .content .content_background " +
                     ".inner .user_blog_post .left .story_container .story_content_box .no_padding .title " +
                     ".resize_text .story_name").first()) != null) {
@@ -79,8 +82,13 @@ public class Parser {
         return book;
     }
 
-    private static boolean chekcConsistency(Document doc) {
-        Elements elements = doc.getAllElements();
-        return false;
+    private void removeUnnecessaryAttributes(List<? extends Node> nodes) {
+        for (Node n : nodes) {
+            n.removeAttr("rel");
+            n.removeAttr("style");
+            n.removeAttr("class");
+
+            removeUnnecessaryAttributes(n.childNodes());
+        }
     }
 }

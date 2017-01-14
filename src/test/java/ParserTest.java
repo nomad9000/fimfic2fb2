@@ -1,6 +1,8 @@
 import com.sun.xml.internal.bind.v2.model.core.EnumLeafInfo;
+import org.anon.Parser;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
+import org.jsoup.parser.Tag;
 import org.jsoup.safety.Cleaner;
 import org.jsoup.safety.Whitelist;
 import org.jsoup.select.Elements;
@@ -100,7 +102,12 @@ public class ParserTest {
     @Test
     public void testParseDescription() {
         try {
-            Document doc = Jsoup.connect("http://www.fimfiction.net/story/359300/lost-nights").get();
+            //Document doc = Jsoup.connect("https://www.fimfiction.net/story/360070/going-native").cookie("view_mature", "true").get();
+            //Document doc = Jsoup.connect("https://www.fimfiction.net/story/314264/hybrid").cookie("view_mature", "true").get();
+            //Document doc = Jsoup.connect("https://www.fimfiction.net/story/359022/sunset-shimmer-discovers-bubble-wrap").cookie("view_mature", "true").get();
+            Document doc = Jsoup.connect("https://www.fimfiction.net/story/265629/the-last-pony-on-earth").cookie("view_mature", "true").get();
+            doc.outputSettings().syntax(Document.OutputSettings.Syntax.xml);
+
  /*           File file = new File("C:\\InvisibleChapter.htm");
             StringBuilder sb = new StringBuilder();
             try {
@@ -114,26 +121,42 @@ public class ParserTest {
             Document doc = Jsoup.parse(sb.toString());*/
 
             Elements description;
-            description = doc.select("html body .body_container .content .content_background .inner .user_blog_post .left .story_container .story_content_box .no_padding .story .story_data .right .padding .description p");
+            description = doc.select("html body .body_container .content .content_background .inner .user_blog_post .left .story_container .story_content_box .no_padding .story .story_data .right .padding .description p,hr");
+            Element el = new Element("temp");
             for (Element e : description) {
-                e.removeAttr("class");
-                e.removeAttr("style");
-                List<Node> childNodes = e.childNodes();
-                if (childNodes.size() > 0) {
-                    cleanNodeOfAttributes(childNodes);
-                } //TODO: is I really have to remove class and style attributes?
+                el.appendChild(e);
             }
-            System.out.println(description);
-            assertEquals(description, "2,960 words total");
+            cleanNodeOfAttributes(el);
+            //cleanNodeOfAttributes(description);
+            Document d = org.jsoup.parser.Parser.parse(el.html(), el.baseUri());
+            d.outputSettings().syntax(Document.OutputSettings.Syntax.xml);
+            System.out.println(d.body().children());
+            assertEquals(d.head().val(), "");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void cleanNodeOfAttributes(List<Node> nodes) {
+/*    private void cleanNodeOfAttributes(List<? extends Node> nodes) {
         for (Node n : nodes) {
-            n.removeAttr("class");
-            n.removeAttr("style");
+            if (n.toString().equals("<hr>")) {
+                n.replaceWith(new TextNode("<hr></hr>", n.baseUri()));
+            }
+        }*/
+
+    private <T extends Node> void cleanNodeOfAttributes(T node) {
+
+        if (node.hasAttr("href")) {
+            node.attr("xlink:href", node.attr("href"));
+            node.removeAttr("href");
+        }
+        node.removeAttr("rel");
+        node.removeAttr("style");
+        node.removeAttr("class");
+        node.removeAttr("double");
+        List<Node> childNodes = node.childNodes();
+        for (Node n : childNodes) {
+            cleanNodeOfAttributes(n);
         }
     }
 }

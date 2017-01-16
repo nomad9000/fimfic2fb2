@@ -1,5 +1,6 @@
 import com.sun.xml.internal.bind.v2.model.core.EnumLeafInfo;
 import org.anon.Parser;
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
 import org.jsoup.parser.Tag;
@@ -12,6 +13,8 @@ import javax.print.Doc;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URL;
+import java.util.Base64;
 import java.util.List;
 import java.util.Scanner;
 
@@ -105,7 +108,8 @@ public class ParserTest {
             //Document doc = Jsoup.connect("https://www.fimfiction.net/story/360070/going-native").cookie("view_mature", "true").get();
             //Document doc = Jsoup.connect("https://www.fimfiction.net/story/314264/hybrid").cookie("view_mature", "true").get();
             //Document doc = Jsoup.connect("https://www.fimfiction.net/story/359022/sunset-shimmer-discovers-bubble-wrap").cookie("view_mature", "true").get();
-            Document doc = Jsoup.connect("https://www.fimfiction.net/story/265629/the-last-pony-on-earth").cookie("view_mature", "true").get();
+            //Document doc = Jsoup.connect("https://www.fimfiction.net/story/265629/the-last-pony-on-earth").cookie("view_mature", "true").get();
+            Document doc = Jsoup.connect("https://www.fimfiction.net/story/360437/a-portal-to-equestria").cookie("view_mature", "true").get();
             doc.outputSettings().syntax(Document.OutputSettings.Syntax.xml);
 
  /*           File file = new File("C:\\InvisibleChapter.htm");
@@ -145,7 +149,10 @@ public class ParserTest {
         }*/
 
     private <T extends Node> void cleanNodeOfAttributes(T node) {
-
+        if (node.nodeName().equals("img")) {
+            String parsedImg = getPictureAsBASE64(node.attr("src"));
+            System.out.println(parsedImg);
+        }
         if (node.hasAttr("href")) {
             node.attr("xlink:href", node.attr("href"));
             node.removeAttr("href");
@@ -158,5 +165,17 @@ public class ParserTest {
         for (Node n : childNodes) {
             cleanNodeOfAttributes(n);
         }
+    }
+
+    private String getPictureAsBASE64(String imageLocation) {
+        String result = null;
+        try {
+            Connection.Response resultImageResponse = Jsoup.connect(imageLocation).cookie("view_mature", "true").ignoreContentType(true).execute();
+            byte[] bytesResult = resultImageResponse.bodyAsBytes();
+            result = Base64.getEncoder().encodeToString(bytesResult);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
     }
 }

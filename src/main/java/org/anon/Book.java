@@ -141,6 +141,14 @@ public class Book {
         this.binaries = binaries;
     }
 
+    public void addBinary(String pictureURL, String pictureAsBASE64) {
+        binaries.put(pictureURL, pictureAsBASE64);
+    }
+
+    public boolean isBinaryExist(String URL) {
+        return binaries.containsKey(URL);
+    }
+
     public String getWordcount() {
         return wordcount;
     }

@@ -1,5 +1,6 @@
 package org.anon;
 
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.helper.Validate;
 import org.jsoup.nodes.Document;
@@ -11,14 +12,21 @@ import org.jsoup.select.Elements;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 
 public class Parser {
 
-    public static Book parseBook(URL url) throws Exception {
-        Book book = new Book();
+    private HashMap<String, String> cookies = new HashMap<>();
+    private Book book = new Book();
+
+    Parser() {}
+
+    public Book parseBook(URL url) throws Exception {
+        //addCookie("view_mature", "true");
         try {
-            Document doc = Jsoup.connect(url.toString()).cookie("view_mature", "true").get();
+            Document doc = Jsoup.connect(url.toString()).cookies(cookies).get();
             //TODO: fb2 required a closing pair for hr tag
             //TODO: remove first hr tag from description
             Elements genres;
@@ -76,19 +84,49 @@ public class Parser {
             book.setBookTitle(doc.select("story_name").first().text());
 
 
+
         } catch (IOException e) {
             e.printStackTrace();
         }
         return book;
     }
 
-    private void removeUnnecessaryAttributes(List<? extends Node> nodes) {
+    private void iterateThroughNodeList(List<? extends Node> nodes) {
         for (Node n : nodes) {
-            n.removeAttr("rel");
-            n.removeAttr("style");
-            n.removeAttr("class");
-
-            removeUnnecessaryAttributes(n.childNodes());
+            checkForPicture(n);
+            removeUnnecessaryAttributes(n);
+            iterateThroughNodeList(n.childNodes());
         }
+    }
+
+    private void checkForPicture(Node node) {
+        if (node.nodeName().equals("img")) {
+            String pictureURL = node.attr("src");
+            if (!book.isBinaryExist(pictureURL)) {
+                try {
+                    Connection.Response response = Jsoup.connect(node.attr("src")).cookies(cookies).
+                            ignoreContentType(true).execute();
+                    byte[] pictureAsBytes = response.bodyAsBytes();
+                    String pictureAsBASE64 = Base64.getEncoder().encodeToString(pictureAsBytes);
+                    book.addBinary(pictureURL, pictureAsBASE64);
+                    Element image = new Element("image");
+                    image.attr("xlink:href", "#" + pictureURL);
+                    node.replaceWith(image);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    private void removeUnnecessaryAttributes(Node node) {
+            node.removeAttr("rel");
+            node.removeAttr("style");
+            node.removeAttr("class");
+            node.removeAttr("alt");
+    }
+
+    private void addCookie(String key, String value) {
+        cookies.put(key, value);
     }
 }

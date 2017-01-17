@@ -131,6 +131,7 @@ public class ParserTest {
                 el.appendChild(e);
             }
             cleanNodeOfAttributes(el);
+            trimHR(description);
             //cleanNodeOfAttributes(description);
             Document d = org.jsoup.parser.Parser.parse(el.html(), el.baseUri());
             d.outputSettings().syntax(Document.OutputSettings.Syntax.xml);
@@ -147,6 +148,23 @@ public class ParserTest {
                 n.replaceWith(new TextNode("<hr></hr>", n.baseUri()));
             }
         }*/
+
+    @Test
+    public void testCoverpageParsing() {
+        try {
+            Document doc = Jsoup.connect("https://www.fimfiction.net/story/360437/a-portal-to-equestria").cookie("view_mature", "true").get();
+            Elements coverpage = doc.select("html body .body_container .content .content_background .inner .user_blog_post .left .story_container .story_content_box .no_padding .story .story_data .right .padding .description .story_image a");
+            String image = getPictureAsBASE64(coverpage.attr("href"));
+            int shift = 0;
+            while (image.length() > shift + 77) {
+                System.out.println(image.substring(shift, shift + 77));
+                shift += 77;
+            }
+            System.out.println(image.substring(shift));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     private <T extends Node> void cleanNodeOfAttributes(T node) {
         if (node.nodeName().equals("img")) {
@@ -177,5 +195,23 @@ public class ParserTest {
             e.printStackTrace();
         }
         return result;
+    }
+
+    private void trimHR(Elements elements) {
+        for (int i = 0; i < elements.size(); i++) {
+            if (elements.get(i).nodeName().equals("hr")) {
+                elements.remove(i);
+                i--;
+            } else {
+                break;
+            }
+        }
+        for (int i = elements.size()-1; i >= 0; i--) {
+            if (elements.get(i).nodeName().equals("hr")) {
+                elements.remove(i);
+            } else {
+                break;
+            }
+        }
     }
 }

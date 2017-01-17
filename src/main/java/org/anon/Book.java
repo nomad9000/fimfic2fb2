@@ -14,7 +14,7 @@ public class Book {
     private ArrayList<String> annotation; //any real text blocks which is able to contain tags <p>, <title>, <image> and other should be collections with this lines already formatted in FB2
     private String keywords;
     private String lastUpdated; //content of tag <date>. Parameter "value" will be parsed from here
-    private URL coverpage; //picture itself will be parsed on document creation, parameter "xlink" will be generated from picture name
+    private String coverpage; //FB2 tag with link to binary with coverpage. Page itself should be already parsed and stored within binaries hashmap
     private String lang = "en"; //Fanfics in any onther language is not allowed on FimFiction
 
     //content of document-info tag
@@ -85,11 +85,11 @@ public class Book {
         this.lastUpdated = lastUpdated;
     }
 
-    public URL getCoverpage() {
+    public String getCoverpage() {
         return coverpage;
     }
 
-    public void setCoverpage(URL coverpage) {
+    public void setCoverpage(String coverpage) {
         this.coverpage = coverpage;
     }
 

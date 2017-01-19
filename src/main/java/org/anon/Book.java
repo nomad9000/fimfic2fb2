@@ -35,6 +35,7 @@ public class Book {
 
     Book() {
         programmUsed = Context.getInstance().getNameAndVersion();
+        genres = new ArrayList<>();
     }
 
     public List<String> getGenres() {
@@ -43,6 +44,10 @@ public class Book {
 
     public void setGenres(List<String> genres) {
         this.genres = genres;
+    }
+
+    public void addGenres(List<String> genres) {
+        this.genres.addAll(genres);
     }
 
     public Author getAuthor() {

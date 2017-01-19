@@ -9,7 +9,7 @@
         <module name="fimfic2fb2" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
+    <bytecodeTargetLevel target="1.8">
       <module name="fimfic2fb2" target="1.8" />
     </bytecodeTargetLevel>
   </component>

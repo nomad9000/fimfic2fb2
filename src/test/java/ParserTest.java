@@ -15,10 +15,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Scanner;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 
@@ -68,7 +68,28 @@ public class ParserTest {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
+    @Test
+    public void parseLastUpdated() {
+        try {
+            Document doc = Jsoup.connect("https://www.fimfiction.net/story/359300/lost-nights").get();
+            //Document doc = Jsoup.connect("https://www.fimfiction.net/story/360437/a-portal-to-equestria").cookie("view_mature", "true").get();
+            Elements elements = doc.select("html body .body_container .content .content_background .inner .user_blog_post .left .story_container .story_content_box .no_padding .story .extra_story_data .inner_data .last_modified div span");
+            for (Element e : elements) {
+                if (e.attr("class").isEmpty()) {
+                    DateFormat simpleDateFormat = new SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH);
+                    String s = e.text().replaceAll("(?:st|nd|rd|th)", "");
+                    Date date = simpleDateFormat.parse(s);
+                    System.out.println(date);
+                }
+            }
+            System.out.println(elements.text());
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test

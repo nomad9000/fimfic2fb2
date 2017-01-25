@@ -4,19 +4,17 @@ import org.anon.Exceptions.TagNotFoundException;
 import org.anon.Exceptions.TagsNotFoundException;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
-import org.jsoup.helper.Validate;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
-import org.jsoup.parser.ParseError;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class Parser {
 
@@ -84,6 +82,9 @@ public class Parser {
             }
 
             book.setAuthor(selectAuthor(doc));
+            book.setKeywords(selectKeywords(doc));
+            book.setFirstPublished(selectDateOfPublishing(doc, ".date_approved"));
+            book.setLastUpdated(selectDateOfPublishing(doc, ".last_modified"));
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -205,6 +206,28 @@ public class Parser {
                 sb.append(e.attr("title")).append(", ");
             }
             return sb.substring(0, sb.length()-2);
+        } else {
+            return null;
+        }
+    }
+
+    private Date selectDateOfPublishing(Document doc, String classOfTagWithDate) {
+        Elements date;
+        Date parsedDate = null;
+        if ((date = doc.select("html body .body_container .content .content_background .inner " +
+                ".user_blog_post .left .story_container .story_content_box .no_padding .story .extra_story_data " +
+                ".inner_data " + classOfTagWithDate + " div span")) != null) {
+            for (Element e : date) {
+                if (e.attr("class").isEmpty()) {
+                    DateFormat format = new SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH);
+                    try {
+                        parsedDate = format.parse(e.text().replaceAll("(?:st|nd|rd|th)", ""));
+                    } catch (ParseException e1) {
+                        e1.printStackTrace(); //TODO: do something
+                    }
+                }
+            }
+            return parsedDate;
         } else {
             return null;
         }

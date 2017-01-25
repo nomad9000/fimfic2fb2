@@ -2,6 +2,7 @@ package org.anon;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -13,7 +14,8 @@ public class Book {
     private String bookTitle;
     private ArrayList<String> annotation; //any real text blocks which is able to contain tags <p>, <title>, <image> and other should be collections with this lines already formatted in FB2
     private String keywords;
-    private String lastUpdated; //content of tag <date>. Parameter "value" will be parsed from here
+    private Date firstPublished;
+    private Date lastUpdated; //content of tag <date>. Parameter "value" will be parsed from here
     private String coverpage; //FB2 tag with link to binary with coverpage. Page itself should be already parsed and stored within binaries hashmap
     private String lang = "en"; //Fanfics in any onther language is not allowed on FimFiction
 
@@ -82,11 +84,11 @@ public class Book {
         this.keywords = keywords;
     }
 
-    public String getLastUpdated() {
+    public Date getLastUpdated() {
         return lastUpdated;
     }
 
-    public void setLastUpdated(String lastUpdated) {
+    public void setLastUpdated(Date lastUpdated) {
         this.lastUpdated = lastUpdated;
     }
 
@@ -176,5 +178,13 @@ public class Book {
 
     public void setRating(String rating) {
         this.rating = rating;
+    }
+
+    public Date getFirstPublished() {
+        return firstPublished;
+    }
+
+    public void setFirstPublished(Date firstPublished) {
+        this.firstPublished = firstPublished;
     }
 }

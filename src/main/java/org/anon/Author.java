@@ -5,9 +5,14 @@ import java.net.URL;
 public class Author {
 
     private String nickname;
-    private URL homePage;
+    private String homePage;
 
-    Author() {}
+    public Author() {}
+
+    public Author(String nickname, String homePage) {
+        this.nickname = nickname;
+        this.homePage = homePage;
+    }
 
     public String getNickname() {
         return nickname;
@@ -17,11 +22,11 @@ public class Author {
         this.nickname = nickname;
     }
 
-    public URL getHomePage() {
+    public String getHomePage() {
         return homePage;
     }
 
-    public void setHomePage(URL homePage) {
+    public void setHomePage(String homePage) {
         this.homePage = homePage;
     }
 }

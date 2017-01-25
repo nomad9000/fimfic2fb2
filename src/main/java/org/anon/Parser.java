@@ -23,11 +23,13 @@ public class Parser {
     private HashMap<String, String> cookies = new HashMap<>();
     private Book book = new Book();
     private List<String> ex = new ArrayList<>();
+    private String baseURI = null;
 
     Parser() {}
 
     public Book parseBook(URL url) throws TagsNotFoundException {
         try {
+            baseURI = url.getHost();
             Document doc = Jsoup.connect(url.toString()).cookies(cookies).get();
             //TODO: fb2 required a closing pair for hr tag
             //TODO: remove first hr tag from description
@@ -72,12 +74,16 @@ public class Parser {
             book.setAnnotation(selectAnnotation(doc));
 
             String coverPageURL = selectPictureURL(doc);
-            if (!book.isBinaryExist(coverPageURL)) {
+            if (coverPageURL != null) {
+                if (!book.isBinaryExist(coverPageURL)) {
                     String coverPageAsBASE64 = downloadPicture(coverPageURL);
                     book.addBinary(coverPageURL, coverPageAsBASE64);
+                }
+                Element coverHTML = createXMLTagForImage(coverPageURL);
+                book.setCoverpage(coverHTML.toString());
             }
-            Element coverHTML = createXMLTagForImage(coverPageURL);
-            book.setCoverpage(coverHTML.toString());
+
+            book.setAuthor(selectAuthor(doc));
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -178,6 +184,33 @@ public class Parser {
         }
     }
 
+    private Author selectAuthor(Document doc) {
+        Element author;
+        if ((author = doc.select("html body .body_container .content .content_background .inner " +
+                ".user_blog_post  .left .story_container .story_content_box .no_padding .title .resize_text " +
+                ".author a").first()) != null) {
+            return new Author(author.text(), baseURI + author.attr("href"));
+        } else {
+            return null;
+        }
+    }
+
+    private String selectKeywords(Document doc) {
+        Elements keywords;
+        if ((keywords = doc.select("html body .body_container .content .content_background .inner " +
+                ".user_blog_post .left .story_container .story_content_box .no_padding .story .extra_story_data " +
+                ".inner_data .character_icon").next("a"))!= null) {
+            StringBuilder sb = new StringBuilder();
+            for (Element e : keywords) {
+                sb.append(e.attr("title")).append(", ");
+            }
+            return sb.substring(0, sb.length()-2);
+        } else {
+            return null;
+        }
+    }
+
+    //process node list. Download all pictures and remove non-standard attributes
     private void iterateThroughNodeList(List<? extends Node> nodes) {
         for (Node n : nodes) {
             checkForPicture(n);
@@ -186,6 +219,8 @@ public class Parser {
         }
     }
 
+    //check whether a node contains picture or not.
+    // If it contains and this picture is not presented in the book yet - download and add to the book
     private void checkForPicture(Node node) {
         if (node.nodeName().equals("img")) {
             String pictureURL = node.attr("src");
@@ -199,6 +234,7 @@ public class Parser {
         }
     }
 
+    //downloads a picture through individual connection and returns it already encoded and formatted in BASE64
     private String downloadPicture(String pictureURL) {
         String result = null;
         try {
@@ -220,18 +256,29 @@ public class Parser {
         return result;
     }
 
+    //removes attributes of particular node
+    //made for the case when parsed node contains attributes that does not present in FB2 standard
     private void removeUnnecessaryAttributes(Node node) {
-            node.removeAttr("rel");
-            node.removeAttr("style");
-            node.removeAttr("class");
-            node.removeAttr("alt");
+        node.removeAttr("rel");
+        node.removeAttr("style");
+        node.removeAttr("class");
+        node.removeAttr("alt");
     }
 
+    //removes leading and closing whitespaces from Elements.
+    //Point of removing is lines before and after main text has no use
     private void trimHR(Elements elements) {
-        for (int i = 0; i < elements.size(); i++) {
+        /*for (int i = 0; i < elements.size(); i++) {
             if (elements.get(i).nodeName().equals("hr")) {
                 elements.remove(i);
                 i--;
+            } else {
+                break;
+            }
+        }*/
+        while (true){
+            if (elements.get(0).nodeName().equals("hr")) {
+                elements.remove(0);
             } else {
                 break;
             }

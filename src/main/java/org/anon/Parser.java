@@ -85,6 +85,7 @@ public class Parser {
             book.setKeywords(selectKeywords(doc));
             book.setFirstPublished(selectDateOfPublishing(doc, ".date_approved"));
             book.setLastUpdated(selectDateOfPublishing(doc, ".last_modified"));
+            LinkedHashMap<String, String> chapters = selectChapterList(doc);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -211,6 +212,19 @@ public class Parser {
         }
     }
 
+    private LinkedHashMap<String, String> selectChapterList(Document doc) {
+        Elements chapters;
+        LinkedHashMap<String, String> result = new LinkedHashMap<>();
+        if ((chapters = doc.select("html body .body_container .content .content_background .inner " +
+                ".user_blog_post .left .story_container .story_content_box .no_padding .story .story_data .right " +
+                ".padding [id^=form-chapter-list] .chapters .chapter_container li .chapter_link")) != null) {
+            for (Element chapter : chapters) {
+                result.put(chapter.text(), baseURI + chapter.attr("href")); //TODO: add a possibility for user to change protocols
+            }
+        }
+        return result;
+    }
+
     private Date selectDateOfPublishing(Document doc, String classOfTagWithDate) {
         Elements date;
         Date parsedDate = null;
@@ -299,7 +313,7 @@ public class Parser {
                 break;
             }
         }*/
-        while (true){
+        while (true) {
             if (elements.get(0).nodeName().equals("hr")) {
                 elements.remove(0);
             } else {

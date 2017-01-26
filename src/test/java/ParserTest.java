@@ -148,6 +148,23 @@ public class ParserTest {
     }
 
     @Test
+    public void testParseChaptersList() {
+        try {
+            Document doc = Jsoup.connect("https://www.fimfiction.net/story/68356/pegasus-device").cookie("view_mature", "true").get();
+            URL URI = new URL(doc.baseUri());
+            String baseURI = URI.getHost();
+            Elements chapters = doc.select("html body .body_container .content .content_background .inner .user_blog_post .left .story_container .story_content_box .no_padding .story .story_data .right .padding [id^=form-chapter-list] .chapters .chapter_container li .chapter_link");
+            LinkedHashMap<String, String> c = new LinkedHashMap<>();
+            for (Element e : chapters) {
+                c.put(e.text(), "https://" + baseURI + e.attr("href"));
+            }
+            System.out.println(c);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
     public void testParseDescription() {
         try {
             //Document doc = Jsoup.connect("https://www.fimfiction.net/story/360070/going-native").cookie("view_mature", "true").get();

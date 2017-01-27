@@ -165,6 +165,17 @@ public class ParserTest {
     }
 
     @Test
+    public void testParseChapterText() {
+        try {
+            Document doc = Jsoup.connect("https://www.fimfiction.net/story/68356/1/pegasus-device/chapter-one").cookie("view_mature", "true").get();
+            Elements elements = doc.select("html body .body_container .content .content_background .inner .user_blog_post .left .story_container .story_content_box .main .chapter #chapter_format .chapter_content .inner_margin #chapter_container");
+            System.out.println(elements);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
     public void testParseDescription() {
         try {
             //Document doc = Jsoup.connect("https://www.fimfiction.net/story/360070/going-native").cookie("view_mature", "true").get();

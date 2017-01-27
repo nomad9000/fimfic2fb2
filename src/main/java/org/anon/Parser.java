@@ -35,11 +35,11 @@ public class Parser {
             Elements genres, annotation;
             Element bookTitle, author, keywords, lastUpdated, picture, rating, wordcount, status;
 
-            try {
+            /*try {
                 book.setBookTitle(selectBookTitle(doc));
             } catch (TagNotFoundException e) {
                 ex.add(e.getMessage());
-            }
+            }*/
             try {
                 book.setRating(selectRating(doc));
             } catch (TagNotFoundException e) {
@@ -68,24 +68,24 @@ public class Parser {
                 throw new TagsNotFoundException(e.toString());
             }
 
-            book.addGenres(selectGenres(doc));
+            //book.addGenres(selectGenres(doc));
             book.setAnnotation(selectAnnotation(doc));
 
             String coverPageURL = selectPictureURL(doc);
             if (coverPageURL != null) {
                 if (!book.isBinaryExist(coverPageURL)) {
-                    String coverPageAsBASE64 = downloadPicture(coverPageURL);
+                    String coverPageAsBASE64 = downloadPicture(coverPageURL, cookies);
                     book.addBinary(coverPageURL, coverPageAsBASE64);
                 }
                 Element coverHTML = createXMLTagForImage(coverPageURL);
                 book.setCoverpage(coverHTML.toString());
             }
 
-            book.setAuthor(selectAuthor(doc));
+            //book.setAuthor(selectAuthor(doc, baseURI));
             book.setKeywords(selectKeywords(doc));
-            book.setFirstPublished(selectDateOfPublishing(doc, ".date_approved"));
-            book.setLastUpdated(selectDateOfPublishing(doc, ".last_modified"));
-            LinkedHashMap<String, String> chapters = selectChapterList(doc);
+            book.setFirstPublished(getDateOfPublishing(doc, ".date_approved"));
+            book.setLastUpdated(getDateOfPublishing(doc, ".last_modified"));
+            LinkedHashMap<String, String> chapters = selectChapterList(doc, baseURI);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -93,13 +93,13 @@ public class Parser {
         return book;
     }
 
-    private Element createXMLTagForImage(String imageURL) {
+    public static Element createXMLTagForImage(String imageURL) {
         Element coverHTML = new Element("image");
         coverHTML.attr("xlink:href", "#" + imageURL);
         return coverHTML;
     }
 
-    private String selectPictureURL(Document doc) {
+    public static String selectPictureURL(Document doc) {
         Element picture;
         if ((picture = doc.select("html body .body_container .content .content_background .inner " +
                 ".user_blog_post .left .story_container .story_content_box .no_padding .story .story_data " +
@@ -110,13 +110,13 @@ public class Parser {
         }
     }
 
-    private ArrayList<String> selectAnnotation(Document doc) {
+    public static ArrayList<String> selectAnnotation(Document doc) {
         Elements annotation;
         if ((annotation = doc.select("html body .body_container .content .content_background .inner " +
                 ".user_blog_post .left .story_container .story_content_box .no_padding .story .story_data .right " +
                 ".padding .description p,hr")) != null) {
             trimHR(annotation);
-            iterateThroughNodeList(annotation);
+            //iterateThroughNodeList(annotation);
             ArrayList<String> annotationStrings = new ArrayList<>();
             for (Element e : annotation) {
                 annotationStrings.add(e.toString());
@@ -127,22 +127,23 @@ public class Parser {
         }
     }
 
-    private List<String> selectGenres(Document doc) {
+    public static Elements selectGenres(Document doc) {
         Elements genres;
         if ((genres = doc.select("html body .body_container .content .content_background .inner " +
                 ".user_blog_post .left .story_container .story_content_box .no_padding .story .story_data " +
                 ".right .padding .description .story_category")) != null) {
-            List<String> genresParsed = new ArrayList<>();
             for (Element e : genres) {
-                genresParsed.add(e.childNode(0).toString());
+                Element genre = new Element("genre");
+                genre.text(e.text());
+                genres.set(genres.indexOf(e), genre);
             }
-            return genresParsed;
+            return genres;
         } else {
             return null;
         }
     }
 
-    private String selectStatus(Document doc) throws TagNotFoundException {
+    public static String selectStatus(Document doc) throws TagNotFoundException {
         Element status;
         if ((status = doc.select("html body .body_container .content .content_background .inner " +
                 ".user_blog_post .left .story_container .story_content_box .no_padding .story .story_data .right " +
@@ -153,7 +154,7 @@ public class Parser {
         }
     }
 
-    private String selectWordcount(Document doc) throws TagNotFoundException {
+    public static String selectWordcount(Document doc) throws TagNotFoundException {
         Element wordcount;
         if ((wordcount = doc.select("html body .body_container .content .content_background .inner " +
                 ".user_blog_post .left .story_container .story_content_box .no_padding .story .story_data .right " +
@@ -164,7 +165,7 @@ public class Parser {
         }
     }
 
-    private String selectRating(Document doc) throws TagNotFoundException {
+    public static String selectRating(Document doc) throws TagNotFoundException {
         Element rating;
         if ((rating = doc.select("html body .body_container .content .content_background .inner " +
                 ".user_blog_post  .left .story_container .story_content_box .no_padding " +
@@ -175,44 +176,49 @@ public class Parser {
         }
     }
 
-    private String selectBookTitle(Document doc) throws TagNotFoundException {
+    public static Element selectBookTitle(Document doc) throws TagNotFoundException {
         Element bookTitle;
         if ((bookTitle = doc.select("html body .body_container .content .content_background " +
                 ".inner .user_blog_post .left .story_container .story_content_box .no_padding .title " +
                 ".resize_text .story_name").first()) != null) {
-            return bookTitle.text();
+            return new Element("book-title").text(bookTitle.text());
         } else {
             throw new TagNotFoundException(".story_name");
         }
     }
 
-    private Author selectAuthor(Document doc) {
+    public static Element selectAuthor(Document doc, String baseURI) {
         Element author;
         if ((author = doc.select("html body .body_container .content .content_background .inner " +
                 ".user_blog_post  .left .story_container .story_content_box .no_padding .title .resize_text " +
                 ".author a").first()) != null) {
-            return new Author(author.text(), baseURI + author.attr("href"));
+            Element parsedAuthor = new Element("author");
+            Element nickname = new Element("nickname").text(author.text());
+            Element homepage = new Element("home-page").text(baseURI + author.attr("href"));
+            parsedAuthor.appendChild(nickname).appendChild(homepage);
+            return parsedAuthor;
+            //return new Author(author.text(), baseURI + author.attr("href"));
         } else {
             return null;
         }
     }
 
-    private String selectKeywords(Document doc) {
+    public static Element selectKeywords(Document doc) {
         Elements keywords;
         if ((keywords = doc.select("html body .body_container .content .content_background .inner " +
                 ".user_blog_post .left .story_container .story_content_box .no_padding .story .extra_story_data " +
-                ".inner_data .character_icon").next("a"))!= null) {
+                ".inner_data .character_icon").select("a"))!= null) {
             StringBuilder sb = new StringBuilder();
             for (Element e : keywords) {
                 sb.append(e.attr("title")).append(", ");
             }
-            return sb.substring(0, sb.length()-2);
+            return new Element("keywords").text(sb.substring(0, sb.length()-2));
         } else {
             return null;
         }
     }
 
-    private LinkedHashMap<String, String> selectChapterList(Document doc) {
+    public static LinkedHashMap<String, String> selectChapterList(Document doc, String baseURI) {
         Elements chapters;
         LinkedHashMap<String, String> result = new LinkedHashMap<>();
         if ((chapters = doc.select("html body .body_container .content .content_background .inner " +
@@ -225,7 +231,7 @@ public class Parser {
         return result;
     }
 
-    private Date selectDateOfPublishing(Document doc, String classOfTagWithDate) {
+    public static Date getDateOfPublishing(Document doc, String classOfTagWithDate) {
         Elements date;
         Date parsedDate = null;
         if ((date = doc.select("html body .body_container .content .content_background .inner " +
@@ -247,10 +253,34 @@ public class Parser {
         }
     }
 
+    public static Element selectDateOfPublishing(Document doc) {
+        Date firstPublished = getDateOfPublishing(doc, ".date_approved");
+        Date lastUpdated = getDateOfPublishing(doc, ".last_modified");
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        Element date = new Element("date");
+        if (firstPublished != null && lastUpdated != null) {
+            date.attr("value", format.format(firstPublished));
+            if (firstPublished.equals(lastUpdated)) {
+                date.text(format.format(firstPublished));
+            } else {
+                date.text(format.format(firstPublished) + " - " + format.format(lastUpdated));
+            }
+        } else if (firstPublished == null && lastUpdated == null) {
+            date.attr("value", "0000-00-00");
+        } else if (lastUpdated == null){
+            date.attr("value", format.format(firstPublished));
+            date.text(format.format(firstPublished));
+        } else {
+            date.attr("value", format.format(lastUpdated));
+            date.text(format.format(lastUpdated));
+        }
+        return date;
+    }
+
     //process node list. Download all pictures and remove non-standard attributes
-    private void iterateThroughNodeList(List<? extends Node> nodes) {
+    private static void iterateThroughNodeList(List<? extends Node> nodes) {
         for (Node n : nodes) {
-            checkForPicture(n);
+            //checkForPicture(n);
             removeUnnecessaryAttributes(n);
             iterateThroughNodeList(n.childNodes());
         }
@@ -258,12 +288,12 @@ public class Parser {
 
     //check whether a node contains picture or not.
     // If it contains and this picture is not presented in the book yet - download and add to the book
-    private void checkForPicture(Node node) {
+    private static void checkForPicture(Node node, Book book, HashMap<String, String> cookies) {
         if (node.nodeName().equals("img")) {
             String pictureURL = node.attr("src");
             String pictureAsBASE64 = null;
             if (!book.isBinaryExist(pictureURL)) {
-                pictureAsBASE64 = downloadPicture(pictureURL);
+                pictureAsBASE64 = downloadPicture(pictureURL, cookies);
             }
             book.addBinary(pictureURL, pictureAsBASE64);
             Element image = createXMLTagForImage(pictureURL);
@@ -272,7 +302,7 @@ public class Parser {
     }
 
     //downloads a picture through individual connection and returns it already encoded and formatted in BASE64
-    private String downloadPicture(String pictureURL) {
+    private static String downloadPicture(String pictureURL, HashMap<String, String> cookies) {
         String result = null;
         try {
             Connection.Response response = Jsoup.connect(pictureURL).cookies(cookies).
@@ -295,7 +325,7 @@ public class Parser {
 
     //removes attributes of particular node
     //made for the case when parsed node contains attributes that does not present in FB2 standard
-    private void removeUnnecessaryAttributes(Node node) {
+    private static void removeUnnecessaryAttributes(Node node) {
         node.removeAttr("rel");
         node.removeAttr("style");
         node.removeAttr("class");
@@ -304,7 +334,7 @@ public class Parser {
 
     //removes leading and closing whitespaces from Elements.
     //Point of removing is lines before and after main text has no use
-    private void trimHR(Elements elements) {
+    private static void trimHR(Elements elements) {
         /*for (int i = 0; i < elements.size(); i++) {
             if (elements.get(i).nodeName().equals("hr")) {
                 elements.remove(i);

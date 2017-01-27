@@ -3,7 +3,7 @@ package org.anon;
 public class Context {
 
     private String nameAndVersion;
-    public static Context INSTANCE;
+    private static Context INSTANCE;
 
     private Context() {
         //get program name and version from manifest parameters

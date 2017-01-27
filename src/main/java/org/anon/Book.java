@@ -1,5 +1,8 @@
 package org.anon;
 
+import org.jsoup.nodes.Element;
+
+import org.jsoup.select.Elements;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
@@ -9,11 +12,11 @@ import java.util.List;
 public class Book {
 
     //content of title-info tag
-    private List<String> genres;
+    private Elements genres;
     private Author author;
     private String bookTitle;
     private ArrayList<String> annotation; //any real text blocks which is able to contain tags <p>, <title>, <image> and other should be collections with this lines already formatted in FB2
-    private String keywords;
+    private Element keywords;
     private Date firstPublished;
     private Date lastUpdated; //content of tag <date>. Parameter "value" will be parsed from here
     private String coverpage; //FB2 tag with link to binary with coverpage. Page itself should be already parsed and stored within binaries hashmap
@@ -28,6 +31,7 @@ public class Book {
     private String rating;
     private String wordcount;
     private String status;
+    private Element customInfo;
 
     //content of body tag (chapters)
     private ArrayList<Chapter> chapters = new ArrayList<>();
@@ -37,18 +41,19 @@ public class Book {
 
     Book() {
         programmUsed = Context.getInstance().getNameAndVersion();
-        genres = new ArrayList<>();
+        genres = new Elements();
+        customInfo = new Element("custom-imfo").attr("info-type", "general");
     }
 
-    public List<String> getGenres() {
+    public Elements getGenres() {
         return genres;
     }
 
-    public void setGenres(List<String> genres) {
+    public void setGenres(Elements genres) {
         this.genres = genres;
     }
 
-    public void addGenres(List<String> genres) {
+    public void addGenres(Elements genres) {
         this.genres.addAll(genres);
     }
 
@@ -76,12 +81,20 @@ public class Book {
         this.annotation = annotation;
     }
 
-    public String getKeywords() {
+    public Element getKeywords() {
         return keywords;
     }
 
-    public void setKeywords(String keywords) {
+    public void setKeywords(Element keywords) {
         this.keywords = keywords;
+    }
+
+    public void addKeywords(String keywords) {
+        if (!this.keywords.text().isEmpty()) {
+            this.keywords.text(this.keywords.text() + "," + keywords);
+        } else {
+            this.keywords.text(keywords);
+        }
     }
 
     public Date getLastUpdated() {
@@ -186,5 +199,21 @@ public class Book {
 
     public void setFirstPublished(Date firstPublished) {
         this.firstPublished = firstPublished;
+    }
+
+    public Element getCustomInfo() {
+        return customInfo;
+    }
+
+    public void setCustomInfo(Element customInfo) {
+        this.customInfo = customInfo;
+    }
+
+    public void addCustomInfo(String info) {
+        if (!customInfo.text().isEmpty()) {
+            customInfo.text(customInfo.text() + "\n" + info);
+        } else {
+            customInfo.text(info);
+        }
     }
 }

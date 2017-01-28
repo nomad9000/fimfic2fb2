@@ -19,8 +19,8 @@ public class Book {
     private Element keywords;
     private Date firstPublished;
     private Date lastUpdated; //content of tag <date>. Parameter "value" will be parsed from here
-    private String coverpage; //FB2 tag with link to binary with coverpage. Page itself should be already parsed and stored within binaries hashmap
-    private String lang = "en"; //Fanfics in any onther language is not allowed on FimFiction
+    private Element coverpage; //FB2 tag with link to binary with coverpage. Page itself should be already parsed and stored within binaries hashmap
+    private Element lang = new Element("lang").text("en"); //Fanfics in any onther language is not allowed on FimFiction
 
     //content of document-info tag
     private String programmUsed;
@@ -105,19 +105,19 @@ public class Book {
         this.lastUpdated = lastUpdated;
     }
 
-    public String getCoverpage() {
+    public Element getCoverpage() {
         return coverpage;
     }
 
-    public void setCoverpage(String coverpage) {
+    public void setCoverpage(Element coverpage) {
         this.coverpage = coverpage;
     }
 
-    public String getLang() {
+    public Element getLang() {
         return lang;
     }
 
-    public void setLang(String lang) {
+    public void setLang(Element lang) {
         this.lang = lang;
     }
 

@@ -69,9 +69,9 @@ public class Parser {
             }
 
             //book.addGenres(selectGenres(doc));
-            book.setAnnotation(selectAnnotation(doc));
+            //book.setAnnotation(selectAnnotation(doc));
 
-            String coverPageURL = selectPictureURL(doc);
+            /*String coverPageURL = selectPictureURL(doc);
             if (coverPageURL != null) {
                 if (!book.isBinaryExist(coverPageURL)) {
                     String coverPageAsBASE64 = downloadPicture(coverPageURL, cookies);
@@ -79,7 +79,7 @@ public class Parser {
                 }
                 Element coverHTML = createXMLTagForImage(coverPageURL);
                 book.setCoverpage(coverHTML.toString());
-            }
+            }*/
 
             //book.setAuthor(selectAuthor(doc, baseURI));
             book.setKeywords(selectKeywords(doc));
@@ -93,35 +93,34 @@ public class Parser {
         return book;
     }
 
-    public static Element createXMLTagForImage(String imageURL) {
+    public static <T extends Node> Element createXMLTagForImage(T imgElement) {
         Element coverHTML = new Element("image");
-        coverHTML.attr("xlink:href", "#" + imageURL);
+        coverHTML.attr("xlink:href", "#" + imgElement.attr("src"));
         return coverHTML;
     }
 
-    public static String selectPictureURL(Document doc) {
+    public static Element selectCoverpage(Document doc) {
         Element picture;
+        Element result = new Element("coverpage");
         if ((picture = doc.select("html body .body_container .content .content_background .inner " +
                 ".user_blog_post .left .story_container .story_content_box .no_padding .story .story_data " +
                 ".right .padding .description .story_image a").first()) != null) {
-            return picture.attr("href");
-        } else {
-            return null;
+            result.appendChild(new Element("img").attr("src", picture.attr("href")));
         }
+        return result;
     }
 
-    public static ArrayList<String> selectAnnotation(Document doc) {
+    public static Element selectAnnotation(Document doc) {
         Elements annotation;
         if ((annotation = doc.select("html body .body_container .content .content_background .inner " +
                 ".user_blog_post .left .story_container .story_content_box .no_padding .story .story_data .right " +
-                ".padding .description p,hr")) != null) {
+                ".padding .description").select("p,hr,center,blockquote")) != null) {
             trimHR(annotation);
-            //iterateThroughNodeList(annotation);
-            ArrayList<String> annotationStrings = new ArrayList<>();
+            Element result = new Element("annotation");
             for (Element e : annotation) {
-                annotationStrings.add(e.toString());
+                result.appendChild(e);
             }
-            return annotationStrings;
+            return result;
         } else {
             return null;
         }
@@ -296,7 +295,7 @@ public class Parser {
                 pictureAsBASE64 = downloadPicture(pictureURL, cookies);
             }
             book.addBinary(pictureURL, pictureAsBASE64);
-            Element image = createXMLTagForImage(pictureURL);
+            Element image = createXMLTagForImage(node);
             node.replaceWith(image);
         }
     }
@@ -311,9 +310,10 @@ public class Parser {
             StringBuilder pictureAsBASE64 = new StringBuilder();
             String parsedBytes = Base64.getEncoder().encodeToString(pictureAsBytes);
             int shift = 0;
-            while (parsedBytes.length() > shift + 77) {
-                pictureAsBASE64.append(parsedBytes.substring(shift, shift + 77));
-                shift += 77;
+            int chunkLength = 77;
+            while (parsedBytes.length() > shift + chunkLength) {
+                pictureAsBASE64.append(parsedBytes.substring(shift, shift + chunkLength));
+                shift += chunkLength;
             }
             pictureAsBASE64.append(parsedBytes.substring(shift));
             result = pictureAsBASE64.toString();
@@ -335,14 +335,6 @@ public class Parser {
     //removes leading and closing whitespaces from Elements.
     //Point of removing is lines before and after main text has no use
     private static void trimHR(Elements elements) {
-        /*for (int i = 0; i < elements.size(); i++) {
-            if (elements.get(i).nodeName().equals("hr")) {
-                elements.remove(i);
-                i--;
-            } else {
-                break;
-            }
-        }*/
         while (true) {
             if (elements.get(0).nodeName().equals("hr")) {
                 elements.remove(0);
@@ -357,6 +349,35 @@ public class Parser {
                 break;
             }
         }
+    }
+
+    public static Element selectChapterText(Document doc) {
+        Elements chapter;
+        Element result = new Element("section");
+        Element title;
+        Element parsedTitle = new Element("title");
+        Element p = new Element("p");
+        if ((title = doc.select("html body .body_container .content .content_background .inner " +
+                "div.user_blog_post.compressed .left .story_container div.story_content_box.chapter_content_box " +
+                ".main .chapter #chapter_format .title div[style=\"display:table; width:100%;\"] #chapter_title")
+                .first()) != null) {
+            p.text(title.text());
+            parsedTitle.appendChild(p);
+            result.appendChild(parsedTitle);
+        }
+        if ((chapter = doc.select("html body .body_container .content .content_background .inner " +
+                "div.user_blog_post.compressed .left .story_container div.story_content_box.chapter_content_box " +
+                ".main .chapter #chapter_format .chapter_content .inner_margin #chapter_container")
+                .select("p,hr,center,blockquote")) != null) {
+            for (Element e : chapter) {
+                result.appendChild(e);
+            }
+        }
+        return result;
+    }
+
+    public static <T extends Node> void processElement(T node){
+
     }
 
     private void addCookie(String key, String value) {

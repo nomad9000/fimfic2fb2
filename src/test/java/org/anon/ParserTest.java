@@ -7,8 +7,7 @@ import org.jsoup.select.Elements;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -16,12 +15,17 @@ public class ParserTest {
 
     private static Document pegasusDevice = null;
     private static Document pegasusDeviceCh01 = null;
+    private static Document testChapter = null;
     private static String baseURI = "www.fimfiction.net";
 
     @BeforeClass
     public static void createEnvironment() throws Exception {
         //pegasusDevice = Jsoup.connect("https://www.fimfiction.net/story/68356/pegasus-device").cookie("view_mature", "true").get();
-        pegasusDeviceCh01 = Jsoup.connect("https://www.fimfiction.net/story/68356/1/pegasus-device/chapter-one").cookie("view_mature", "true").get();
+        //pegasusDeviceCh01 = Jsoup.connect("https://www.fimfiction.net/story/68356/1/pegasus-device/chapter-one").cookie("view_mature", "true").get();
+        HashMap<String, String> cookies = new HashMap<>();
+        cookies.put("view_mature", "true");
+        cookies.put("session_token", "Od1uNPk-jTbKOWgV_sX-bACBDNFerBjh");
+        testChapter = Jsoup.connect("https://www.fimfiction.net/chapter/1049989").cookies(cookies).get();
     }
 
     @Test
@@ -105,7 +109,28 @@ public class ParserTest {
     @Test
     public void selectChapterText() throws Exception {
         Element chapter = Parser.selectChapterText(pegasusDeviceCh01);
-        System.out.println(chapter);
+        assertEquals("Chapter text is wrong", chapter.children().size(), 547);
     }
 
+    @Test
+    public void processElement() throws Exception {
+        Element chapter = Parser.selectChapterText(testChapter);
+        int centresBefore = 0;
+        List<Element> cildrens = chapter.children();
+        for (Element e : cildrens) {
+            if (e.tagName().equals("center")) {
+                centresBefore++;
+            }
+        }
+        HashSet<String> imageLinks = new HashSet<>();
+        Parser.processElement(chapter, imageLinks);
+        cildrens = chapter.children();
+        int centresAfter = 0;
+        for (Element e : cildrens) {
+            if (e.tagName().equals("subtitle")) {
+                centresAfter++;
+            }
+        }
+        assertEquals("Process done wrong", centresAfter, centresBefore);
+    }
 }

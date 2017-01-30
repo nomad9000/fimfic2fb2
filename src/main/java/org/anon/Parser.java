@@ -7,6 +7,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
@@ -22,6 +23,7 @@ public class Parser {
     private Book book = new Book();
     private List<String> ex = new ArrayList<>();
     private String baseURI = null;
+    HashSet<String> invalidTags = new HashSet<>(Arrays.asList("i", "b", "center", "hr"));
 
     Parser() {}
 
@@ -94,9 +96,9 @@ public class Parser {
     }
 
     public static <T extends Node> Element createXMLTagForImage(T imgElement) {
-        Element coverHTML = new Element("image");
-        coverHTML.attr("xlink:href", "#" + imgElement.attr("src"));
-        return coverHTML;
+        Element image = new Element("image");
+        image.attr("xlink:href", "#" + imgElement.attr("src"));
+        return image;
     }
 
     public static Element selectCoverpage(Document doc) {
@@ -330,6 +332,7 @@ public class Parser {
         node.removeAttr("style");
         node.removeAttr("class");
         node.removeAttr("alt");
+        node.removeAttr("double");
     }
 
     //removes leading and closing whitespaces from Elements.
@@ -376,8 +379,42 @@ public class Parser {
         return result;
     }
 
-    public static <T extends Node> void processElement(T node){
+    public static <T extends Node> void processElement(T node, HashSet<String> imageLinks){
+        switch (node.nodeName()) {
+            case "hr":          node.replaceWith(generateValidNode(node, "empty-line"));    break;
+            case "i":           node.replaceWith(generateValidNode(node, "emphasis"));      break;
+            case "b":           node.replaceWith(generateValidNode(node, "strong"));        break;
+            case "blockquote":  node.replaceWith(generateValidNode(node, "cite"));          break;
+            case "center":      node.replaceWith(generateValidNode(node, "subtitle"));      break;
+            case "img":         imageLinks.add(node.attr("src"));
+                                node.replaceWith(createXMLTagForImage(node));
+                                break;
+            case "span":        if (node.attr("style")
+                                    .matches("^.*text-decoration: line-through.*$")) {
+                                    node.replaceWith(generateValidNode(node, "strike"));
+                                } else {
+                                    node.unwrap();
+                                    /*node.removeAttr("class");
+                                    node.removeAttr("style");*/
+                                }
+                                break;
+            default:            removeUnnecessaryAttributes(node);
+        }
+        for (int i = 0; i < node.childNodes().size(); i++) {
+            processElement(node.childNode(i), imageLinks);
+        }
+        /*for (Node n : node.childNodes()) {
+            processElement(n, imageLinks);
+        }*/
+    }
 
+    private static <T extends Node> Node generateValidNode(T invalidNode, String validTag) {
+        Element validNode = new Element(validTag);
+        List<Node> children = invalidNode.childNodes();
+        while (children.size() > 0) {
+            validNode.appendChild(children.get(0));
+        }
+        return validNode;
     }
 
     private void addCookie(String key, String value) {

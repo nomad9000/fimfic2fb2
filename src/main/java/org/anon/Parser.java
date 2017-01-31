@@ -371,41 +371,57 @@ public class Parser {
         if ((chapter = doc.select("html body .body_container .content .content_background .inner " +
                 "div.user_blog_post.compressed .left .story_container div.story_content_box.chapter_content_box " +
                 ".main .chapter #chapter_format .chapter_content .inner_margin #chapter_container")
-                .select("p,hr,center,blockquote")) != null) {
-            for (Element e : chapter) {
-                result.appendChild(e);
+                /*.select("p, hr, center, blockquote, span")*/) != null) {
+            List<Node> chapterElements = chapter.get(0).childNodes();
+            for (int i = 0; i < chapterElements.size(); i++) {
+                result.appendChild(chapterElements.get(i));
+                i--;
             }
         }
         return result;
     }
 
-    public static <T extends Node> void processElement(T node, HashSet<String> imageLinks){
+    public static <T extends Node> boolean processElement(T node, HashSet<String> imageLinks){
+        boolean nodeWasRemoved = false;
         switch (node.nodeName()) {
-            case "hr":          node.replaceWith(generateValidNode(node, "empty-line"));    break;
-            case "i":           node.replaceWith(generateValidNode(node, "emphasis"));      break;
-            case "b":           node.replaceWith(generateValidNode(node, "strong"));        break;
-            case "blockquote":  node.replaceWith(generateValidNode(node, "cite"));          break;
-            case "center":      node.replaceWith(generateValidNode(node, "subtitle"));      break;
+            case "hr":          node.replaceWith(generateValidNode(node, "empty-line"));
+                                nodeWasRemoved = true;
+                                break;
+            case "i":           node.replaceWith(generateValidNode(node, "emphasis"));
+                                nodeWasRemoved = true;
+                                break;
+            case "b":           node.replaceWith(generateValidNode(node, "strong"));
+                                nodeWasRemoved = true;
+                                break;
+            case "blockquote":  node.replaceWith(generateValidNode(node, "cite"));
+                                nodeWasRemoved = true;
+                                break;
+            case "center":      node.replaceWith(generateValidNode(node, "subtitle"));
+                                nodeWasRemoved = true;
+                                break;
             case "img":         imageLinks.add(node.attr("src"));
                                 node.replaceWith(createXMLTagForImage(node));
+                                nodeWasRemoved = true;
                                 break;
             case "span":        if (node.attr("style")
                                     .matches("^.*text-decoration: line-through.*$")) {
                                     node.replaceWith(generateValidNode(node, "strike"));
                                 } else {
                                     node.unwrap();
-                                    /*node.removeAttr("class");
-                                    node.removeAttr("style");*/
                                 }
+                                nodeWasRemoved = true;
+                                break;
+            case "div":         node.remove();
+                                nodeWasRemoved = true;
                                 break;
             default:            removeUnnecessaryAttributes(node);
         }
         for (int i = 0; i < node.childNodes().size(); i++) {
-            processElement(node.childNode(i), imageLinks);
+            if (processElement(node.childNode(i), imageLinks)) {
+                i--;
+            };
         }
-        /*for (Node n : node.childNodes()) {
-            processElement(n, imageLinks);
-        }*/
+        return nodeWasRemoved;
     }
 
     private static <T extends Node> Node generateValidNode(T invalidNode, String validTag) {
